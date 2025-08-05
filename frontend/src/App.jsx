@@ -8,12 +8,16 @@ import UploadPage from "@/components/UploadPage";
 import DocsPage from "@/components/DocsPage";      
 import ProfilePage from "@/components/ProfilePage"; 
 import RegisterPage from "@/components/RegisterPage";
-import AccountSetupPage from "@/components/Accountsetup"; // Assuming you have this component
+import AccountSetupPage from "@/components/Accountsetup"; 
+import ThemeToggle from "@/components/ThemeToggle"
 
 
 function App() {
   return (
     <Router>
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/Dashboard" element={<Dashboard />} />
