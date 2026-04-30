@@ -1,235 +1,141 @@
 # Internal Docs Q&A Agent
-## Project Overview
-The Internal Docs Q&A Agent is a full-stack application designed to allow users to upload internal documents (e.g., PDFs) and then query those documents using an AI-powered conversational interface. It provides a secure login, document management, and a chat interface to interact with a Retrieval Augmented Generation (RAG) system.
+
+## Overview
+A CLI-powered Retrieval Augmented Generation (RAG) application that lets you ingest internal PDF documents and query them using AI. Ask questions in natural language and get answers grounded in your documents — all from the terminal.
 
 ## Key Features
-* User Authentication: Simple login page (placeholder authentication).
+* **Document Ingestion** — Load PDFs (single file or entire directories) into a ChromaDB vector store.
+* **AI-Powered Q&A** — Ask questions and receive answers backed by document context, powered by Google Gemini.
+* **Document Management** — List and upload documents from the command line.
+* **Interactive Mode** — A REPL-style session for continuous Q&A with slash-commands.
+* **Rich CLI** — Beautiful terminal output with tables, panels, spinners, and Markdown rendering.
 
-* Dashboard: Central hub for navigating to different functionalities.
-
-* Document Upload: Upload PDF documents to the backend for processing.
-
-* AI-Powered Q&A Chat: Ask questions about the uploaded documents and receive AI-generated answers.
-
-* Document Listing: View a list of all uploaded documents with basic details.
-
-* User Profile: Display basic user information.
-
-## Technologies Used
-This project is built with a React frontend and a FastAPI backend.
-
-## Frontend:
-
-* React.js: A JavaScript library for building user interfaces.
-
-* Vite: A fast build tool for modern web projects.
-
-* Tailwind CSS: A utility-first CSS framework for rapid UI development.
-
-* react-router-dom: For declarative routing in React applications.
-
-* shadcn/ui: A collection of re-usable components built with Radix UI and Tailwind CSS.
-
-* axios (or fetch API): For making HTTP requests to the backend.
-
-## Backend:
-
-* FastAPI: A modern, fast (high-performance) web framework for building APIs with Python 3.7+.
-
-* Uvicorn: An ASGI server for running FastAPI applications.
-
-* Pydantic: For data validation and settings management.
-
-* python-multipart: Required for handling file uploads in FastAPI.
-
-* google-generativeai: For interacting with Google's Gemini API (specifically Gemini 2.0 Flash) for AI responses.
-
-* sentence-transformers: For generating embeddings from text (e.g., all-MiniLM-L6-v2).
-
-* transformers: For loading LLM models (e.g., google/flan-t5-base).
-
-* langchain / langchain-community / langchain-core: For building the RAG pipeline (document loading, chunking, vector store interaction).
-
-* PyMuPDF (fitz): For loading and extracting text from PDF documents.
-
-* ChromaDB: A vector database used to store and retrieve document embeddings.
-
-* dotenv: For managing environment variables.
+## Technologies
+| Layer | Stack |
+|---|---|
+| **LLM** | Google Gemini (via `google-generativeai`) |
+| **Embeddings** | `sentence-transformers/all-MiniLM-L6-v2` |
+| **Vector Store** | ChromaDB |
+| **RAG Framework** | LangChain |
+| **PDF Parsing** | PyMuPDF (`fitz`) |
+| **CLI UI** | Rich |
 
 ## Folder Structure
-
 ```
 internal-docs-qa-agent/
-├── .venv/                      # Python Virtual Environment
 ├── backend/
 │   ├── app/
-│   │   ├── config/             # Backend configuration
-│   │   ├── core/               # Core Q&A chain logic (qa_chain.py)
-│   │   ├── ingestion/          # Document loading, chunking, embedding (document_loader.py, chunker.py, embedder.py, run_ingestion.py)
-│   │   ├── vectorstore/        # ChromaDB client (chroma_client.py)
+│   │   ├── cli.py              # CLI entry point (interactive & sub-commands)
+│   │   ├── __main__.py         # Allows `python -m backend.app`
 │   │   ├── api.py              # FastAPI application & API endpoints
-│   │   ├── model.py            # Pydantic models for API
-│   │   └── rag_pipeline.py     # RAG pipeline logic
-│   └── requirements.txt        # Python dependencies
-├── docs/                       # Directory for uploaded documents
-│   └── sample docs/            # Default location for uploaded files and vector store
-│       └── chroma_db/          # ChromaDB persistent storage
-│           └── chroma.sqlite3
-├── frontend/
-│   ├── public/                 # Static assets
-│   ├── src/
-│   │   ├── assets/
-│   │   ├── components/         # React components (Dashboard, ChatPage, UploadPage, etc.)
-│   │   │   └── ui/             # Shadcn/ui components (button, card, input, etc.)
-│   │   ├── lib/                # Utility functions (utils.js)
-│   │   ├── App.jsx             # Main React application, handles routing
-│   │   ├── index.css           # Global CSS and Tailwind directives
-│   │   └── index.jsx           # React app entry point
-│   ├── .gitignore              # Git ignore for frontend (e.g., node_modules)
-│   ├── components.json         # Shadcn/ui configuration
-│   ├── index.html              # Frontend entry HTML
-│   ├── jsconfig.json           # JS configuration for aliases
-│   ├── package-lock.json       # Frontend dependency lock file
-│   ├── package.json            # Frontend dependencies and scripts
-│   ├── postcss.config.js       # PostCSS configuration
-│   ├── tailwind.config.js      # Tailwind CSS configuration
-│   └── vite.config.js          # Vite build tool configuration
-├── .gitignore                  # Root Git ignore (for .venv, data, etc.)
-└── README.md                   # This file
+│   │   ├── model.py            # Pydantic models
+│   │   ├── rag_pipeline.py     # RAG pipeline logic
+│   │   ├── run_ingestion.py    # Ingestion pipeline runner
+│   │   ├── config/
+│   │   │   └── settings.py     # Configuration constants
+│   │   ├── core/
+│   │   │   └── qa_chain.py     # Q&A chain (Gemini + ChromaDB retriever)
+│   │   ├── ingestion/
+│   │   │   ├── document_loader.py
+│   │   │   ├── chunker.py
+│   │   │   └── embedder.py
+│   │   └── vectorstore/
+│   │       └── chroma_client.py
+│   └── requirements.txt
+├── docs/                       # Uploaded documents stored here
+│   └── sample docs/
+├── .env                        # GOOGLE_API_KEY goes here
+├── .gitignore
+└── README.md
 ```
 
-## Setup Instructions
-Follow these steps to set up and run the application locally.
+## Setup
 
-## Prerequisites
-* Git: For cloning the repository.
+### Prerequisites
+* Python 3.9+
+* A Google API key with Gemini access
 
-* Python 3.9+: For the backend.
-
-* Node.js (LTS recommended): For the frontend.
-
-* npm (Node Package Manager): Comes with Node.js.
-
-## 1. Clone the Repository
-```
-git clone <https://github.com/Manikandan1511/internal-docs-qa-agent>
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Manikandan1511/internal-docs-qa-agent
 cd internal-docs-qa-agent
 ```
-## 2. Backend Setup
-Navigate into the backend directory, set up a virtual environment, install dependencies, and start the FastAPI server.
-```
-cd backend
 
-# Create a Python virtual environment
-python3 -m venv .venv
+### 2. Create a Virtual Environment
+```bash
+python -m venv .venv
 
-# Activate the virtual environment
-# On macOS/Linux:
+# Activate:
+# macOS/Linux:
 source .venv/bin/activate
-# On Windows (Command Prompt):
-.venv\Scripts\activate.bat
-# On Windows (PowerShell):
+# Windows (PowerShell):
 .venv\Scripts\Activate.ps1
-
-# Install backend dependencies
-pip install -r requirements.txt
-
-# Install python-multipart for file uploads (if not already in requirements.txt)
-pip install python-multipart
-
-# Navigate back to the root of the backend application
-cd app
-
-# Start the FastAPI server
-# This will run on http://127.0.0.1:8000
-uvicorn api:app --reload
-
-# Keep this terminal window open and running for the backend server.
 ```
 
-## 3. Frontend Setup
-Open a new terminal window, navigate to the frontend directory, install dependencies, and start the development server.
+### 3. Install Dependencies
+```bash
+pip install -r backend/requirements.txt
 ```
-# Open a NEW terminal window
-cd internal-docs-qa-agent/frontend
 
-# Install frontend dependencies
-npm install
-
-# Start the React development server
-# This will run on http://localhost:5173
-npm run dev
-
-# Keep this terminal window open and running for the frontend server.
+### 4. Configure Environment
+Create a `.env` file in the project root:
 ```
+GOOGLE_API_KEY=your-google-api-key-here
+```
+
 ## Usage
-Access the Application: Open your web browser and navigate to http://localhost:5173/.
 
-### Login: Use the placeholder credentials:
+### Interactive Mode (recommended)
+Launch the interactive REPL from the **project root**:
+```bash
+python -m backend.app
+```
 
-* Username: admin
+This opens an interactive session where you can type questions or use slash-commands:
 
-* Password: admin
+| Command | Description |
+|---|---|
+| `/ingest <path>` | Ingest a PDF or folder of PDFs |
+| `/upload <file>` | Copy a file to docs & optionally ingest |
+| `/docs` | List all uploaded documents |
+| `/help` | Show available commands |
+| `/quit` | Exit |
 
-### Navigate:
+Type any other text to ask a question about your documents.
 
-* From the Dashboard, you can click on the cards to navigate to:
+### Direct Commands
+```bash
+# Ingest documents
+python -m backend.app ingest "docs/sample docs"
 
-  * Upload File: Upload documents.
+# Ask a question
+python -m backend.app ask "What is the refund policy?"
 
-  * AI Q&A: Access the chat interface (this page includes the sidebar).
+# Ask with custom retrieval depth
+python -m backend.app ask "Summarize the Q3 report" -k 5
 
-  * View Docs: See a list of uploaded documents.
+# List uploaded documents
+python -m backend.app docs
 
-  * User Profile: View user details.
+# Upload a new document
+python -m backend.app upload path/to/report.pdf
+```
 
-* The Sidebar (visible on the Chat Q&A page) also provides direct navigation to all main sections.
+### API Server (optional)
+The FastAPI server is still available if you need HTTP access:
+```bash
+cd backend/app
+uvicorn api:app --reload
+```
 
-### Chat Q&A:
-
-* On the "AI Q&A" page, type your question in the input box and press Enter or click "Send".
-
-* The AI will respond based on its current knowledge (which will be limited until documents are ingested).
-
-### Upload Documents:
-
-* On the "Upload Documents" page, click "Choose File", select a PDF document from your device, and click "Upload File".
-
-* The file will be saved to internal-docs-qa-agent/docs/sample docs/ on your backend.
-
-### View Docs:
-
-* On the "View Docs" page, you will see a list of files that have been uploaded to the backend's docs/sample docs/ directory.
-
-### API Endpoints
-Backend (FastAPI) - http://127.0.0.1:8000
-
-* GET /: Root endpoint, returns a simple message.
-
-* POST /query: Accepts {"question": "..."} and returns {"answer": "...", "sources": [...]} for AI Q&A.
-
-* POST /uploadfile/: Accepts a multipart/form-data file upload and saves it to docs/sample docs/.
-
-* GET /docs/: Returns a list of uploaded documents (name, size, last modified).
-
-* GET /profile/: Returns static user profile information.
-
-### Future Enhancements
-Full Document Ingestion: Implement the run_ingestion_pipeline in the backend to automatically process (chunk, embed, store in ChromaDB) uploaded documents, making them immediately searchable by the AI.
-
-* Robust Authentication: Replace the placeholder login with a proper authentication system (e.g., JWT, OAuth).
-
-* Document Deletion/Management: Add functionality to delete or manage documents from the View Docs page.
-
-* Improved UI/UX: Enhance styling, add animations, and ensure full responsiveness across all devices.
-
-* Search Functionality: Add a search bar to the View Docs page to easily find specific documents.
-
-* Error Boundaries: Implement React error boundaries for graceful error handling in the frontend.
-
-* Loading States & Feedback: Improve loading indicators and user feedback for all asynchronous operations.
-
-* Backend Scaling: Consider deploying the backend with a production-ready ASGI server (like Gunicorn + Uvicorn) and potentially containerization (Docker).
+#### API Endpoints
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Health check |
+| `POST` | `/query` | Q&A query (`{"question": "..."}`) |
+| `POST` | `/uploadfile/` | Upload a document |
+| `GET` | `/docs/` | List documents |
+| `GET` | `/profile/` | User profile |
 
 ## License
 This project is open-source.
